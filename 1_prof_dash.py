@@ -18,6 +18,7 @@ PROF_DB = os.path.join(BASE_DIR, "prof_db")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 DATABASE_URL = f"sqlite:///./main_app.db"  # Updated for Windows safety
 GPU_URL = "http://127.0.0.1:8001"
+STUDENT_URL = os.getenv("STUDENT_URL", "http://localhost:8002")
 
 engine = create_engine(DATABASE_URL)
 templates = Jinja2Templates(directory = "templates")
@@ -57,7 +58,7 @@ def root(): return RedirectResponse("/login")
 @app.get("/login")
 def login_page(request: Request, success: str = None):
     msg = "Registration Successful! Please Login." if success else None
-    return templates.TemplateResponse("login.html", {"request": request, "success_msg": msg})
+    return templates.TemplateResponse(request, name="login.html", context={"success_msg": msg})
 
 
 @app.post("/login")
@@ -65,9 +66,9 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
           session: Session = Depends(get_session)):
     prof = session.exec(select(Professor).where(Professor.username == username)).first()
     if not prof:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "User does not exist."})
+        return templates.TemplateResponse(request, name="login.html", context={"error": "User does not exist."})
     if prof.password != password:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Incorrect Password"})
+        return templates.TemplateResponse(request, name="login.html", context={"error": "Incorrect Password"})
     
     resp = RedirectResponse("/dashboard", status_code = 303)
     resp.set_cookie("prof_id", str(prof.id))
@@ -77,7 +78,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
 @app.get("/register")
 def reg_page(request: Request, error: str = None):
     msg = "Username already taken" if error == "Exists" else None
-    return templates.TemplateResponse("register.html", {"request": request, "error": msg})
+    return templates.TemplateResponse(request, name="register.html", context={"error": msg})
 
 
 @app.post("/register")
@@ -141,10 +142,10 @@ def dashboard(request: Request, class_id: int = None, prof: Professor = Depends(
                 {"roll": s.roll_number, "name": s.name, "status": status, "method": method, "alert": alert})
     
     # Renders the ATTENDANCE specific template
-    return templates.TemplateResponse("attendance.html", {
-        "request": request, "prof": prof, "classes": classes,
+    return templates.TemplateResponse(request, name="attendance.html", context={
+        "prof": prof, "classes": classes,
         "selected_class": selected_class, "attendance": attendance_data,
-        "today": today, "student_url": "http://10.2.43.53:8002"  # <--- UPDATE YOUR IP HERE
+        "today": today, "student_url": STUDENT_URL
     })
 
 
@@ -158,8 +159,8 @@ def manage(request: Request, class_id: int = None, prof: Professor = Depends(get
     selected_class = session.get(ClassRoom, class_id) if class_id else None
     
     # Renders the MANAGEMENT specific template
-    return templates.TemplateResponse("manage.html", {
-        "request": request, "prof": prof, "classes": classes,
+    return templates.TemplateResponse(request, name="manage.html", context={
+        "prof": prof, "classes": classes,
         "selected_class": selected_class
     })
 

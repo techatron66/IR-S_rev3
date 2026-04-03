@@ -41,45 +41,79 @@ The project uses a **Microservices Architecture** to ensure high performance and
     ```
 3. **Install Dependencies**:
     ```bash
-    pip install -r https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip
+    pip install -r requirements.txt
     ```
 
-### Critical Network Configuration
-For students to scan the QR code with their phones, you must configure your IP address.
-1. Open Command Prompt/Terminal and run `ipconfig` (Windows) or `ifconfig` (Mac).
-2. Copy your **IPv4 Address** (e.g., `192.168.1.15`).
-3. Open `https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip`, find **Line 140** (approx), and update:
-    ```python
-    "student_url": "https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip"  # <-- Replace with YOUR IP
-    ```
+### Network Configuration for Phone Access
+For students to access the system from their phones:
+
+1. **Find your PC's local IP address**:
+   ```bash
+   # Windows
+   ipconfig | findstr "IPv4"
+   
+   # Mac/Linux
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+   ```
+   Copy the IP address (e.g., `192.168.1.15`).
+
+2. **Create environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and replace the IP addresses with your actual local IP:
+   ```bash
+   PROF_SERVER=http://192.168.1.15:8000
+   STUDENT_URL=http://192.168.1.15:8002
+   ```
+
+3. **Ensure phone and PC are on same WiFi network**.
 
 ---
 
-## Usage Instructions
+## Quick Start (Recommended)
+
+1. **Setup environment**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your local IP (e.g., 192.168.1.15)
+   ```
+
+2. **Start all services**:
+   ```bash
+   ./start.sh
+   ```
+
+## Manual Usage Instructions
 
 You must run **three separate terminal windows** to start the full system.
 
-### Step 1: Start the AI Server
+### Step 1: Load Environment Variables
 ```bash
-python https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip
+# Load your local configuration
+source .env
+```
+
+### Step 2: Start the AI Server
+```bash
+python 2_gpu_server.py
 ```
 Wait for: Uvicorn running on http://0.0.0.0:8001
 
-### Step 2: Start the Student App
+### Step 3: Start the Student App
 ```bash
-python https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip
+python 3_student_app.py
 ```
 Wait for: Uvicorn running on http://0.0.0.0:8002
 
-### Step 3: Start the Main Dashboard
+### Step 4: Start the Main Dashboard
 ```bash
-python https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip
+python 1_prof_dash.py
 ```
 Wait for: Uvicorn running on http://0.0.0.0:8000
 
-### Step 4: Login
-Open your browser to http://localhost:8000 and register a new account.
-![alt text](https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip)
+### Step 5: Login
+Open your browser to **http://192.168.1.15:8000** (replace with your actual IP) and register a new account.
 
 ---
 

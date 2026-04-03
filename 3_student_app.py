@@ -2,14 +2,15 @@ import uvicorn
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
 import requests
+import os
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-PROF_SERVER = "http://127.0.0.1:8000"
+PROF_SERVER = os.getenv("PROF_SERVER", "http://127.0.0.1:8000")
 
 @app.get("/")
 def login(request: Request, cid: str = ""):
-    return templates.TemplateResponse("student_login.html", {"request": request, "cid": cid})
+    return templates.TemplateResponse(request, name="student_login.html", context={"cid": cid})
 
 @app.post("/verify")
 def verify(class_id: str = Form(...), roll_number: str = Form(...), file: UploadFile = File(...)):
