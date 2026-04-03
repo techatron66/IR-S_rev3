@@ -179,3 +179,4 @@ attendance/
 
 **Q: The AI is slow.**
 - Fix: Face recognition is heavy. On a CPU, it may take 1-3 seconds per verification. For instant results, run on a machine with an NVIDIA GPU.
+# IR-S_rev2
