@@ -22,6 +22,26 @@ The project uses a **Microservices Architecture** to ensure high performance and
 
 ---
 
+## 🎨 UI Design System
+
+The interface features a modern **Apple Keynote-inspired minimalist design** with smooth animations and a clean, professional aesthetic:
+
+- **Design System Files:**
+  - `static/css/iris-design-system.css` - Complete design system with CSS variables, component styling, and animations
+  - `static/js/iris-design-system.js` - Interactive components (modals, sidebar navigation, toast notifications)
+
+- **Key Features:**
+  - Frosted glass effect (backdrop-filter blur)
+  - Spring animations for smooth interactions
+  - Responsive sidebar navigation
+  - System font stack (SF Pro Display, Segoe UI, -apple-system)
+  - Accessible color palette with WCAG compliance
+  - Built-in toast notification system
+
+All design files are self-contained with **zero additional dependencies** beyond what's already in `requirements.txt`.
+
+---
+
 ## Installation Guide
 
 ### Prerequisites
@@ -61,10 +81,12 @@ For students to access the system from their phones:
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and replace the IP addresses with your actual local IP:
+   Edit `.env` and configure these key variables:
    ```bash
    PROF_SERVER=http://192.168.1.15:8000
    STUDENT_URL=http://192.168.1.15:8002
+   NV_API_KEY=your_nvidia_api_key_here
+   DATABASE_URL=sqlite:///./main_app.db
    ```
 
 3. **Ensure phone and PC are on same WiFi network**.
@@ -88,32 +110,35 @@ For students to access the system from their phones:
 
 You must run **three separate terminal windows** to start the full system.
 
-### Step 1: Load Environment Variables
+### Step 1: Activate Virtual Environment
 ```bash
-# Load your local configuration
-source .env
+# Windows:
+.\venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
 ```
 
-### Step 2: Start the AI Server
+### Step 2: Start the AI Server (Port 8001)
 ```bash
-python 2_gpu_server.py
+uvicorn 2_gpu_server:app --host 127.0.0.1 --port 8001
 ```
-Wait for: Uvicorn running on http://0.0.0.0:8001
+Wait for: `Uvicorn running on http://127.0.0.1:8001`
 
-### Step 3: Start the Student App
+### Step 3: Start the Student App (Port 8002)
 ```bash
-python 3_student_app.py
+uvicorn 3_student_app:app --host 127.0.0.1 --port 8002
 ```
-Wait for: Uvicorn running on http://0.0.0.0:8002
+Wait for: `Uvicorn running on http://127.0.0.1:8002`
 
-### Step 4: Start the Main Dashboard
+### Step 4: Start the Main Dashboard (Port 8000)
 ```bash
-python 1_prof_dash.py
+uvicorn 1_prof_dash:app --host 127.0.0.1 --port 8000
 ```
-Wait for: Uvicorn running on http://0.0.0.0:8000
+Wait for: `Uvicorn running on http://127.0.0.1:8000`
 
 ### Step 5: Login
-Open your browser to **http://192.168.1.15:8000** (replace with your actual IP) and register a new account.
+For **local testing:** Open http://127.0.0.1:8000  
+For **phone access:** Open http://YOUR_LOCAL_IP:8000 (from your .env configuration)
 
 ---
 
@@ -164,19 +189,64 @@ attendance/
 
 ---
 
+## What's New in This Version
+
+### UI/UX Enhancements
+- ✨ **Modern Design System**: Apple Keynote-inspired minimalist interface with frosted glass effects and smooth animations
+- 🎨 **Responsive Layouts**: Sidebar navigation, card-based components, and mobile-friendly design across all pages
+- 🔔 **Toast Notifications**: Real-time feedback system for user actions
+- ⌨️ **Keyboard Navigation**: Enhanced accessibility with shortcuts and keyboard controls
+
+### Updated Templates
+- `login.html` & `register.html` - Modern card-centered authentication interface
+- `student_login.html` - Enhanced selfie check-in with improved visual feedback
+- `attendance.html` - Redesigned with sidebar + live attendance table with status indicators
+- `manage.html` - Improved class and student management forms with better organization
+- `grading.html` - Integrated with new design system
+
+### New Design System Files
+- `static/css/iris-design-system.css` - Complete CSS framework (550+ lines)
+- `static/js/iris-design-system.js` - Component utilities and interactive features
+
+---
+
 ## Troubleshooting
+
+**Q: Services fail to start with exit code 1.**
+- Fix 1: Verify all dependencies are installed: `pip install -r requirements.txt`
+- Fix 2: Check if ports 8000, 8001, 8002 are already in use:
+  ```bash
+  # Windows
+  netstat -ano | findstr ":8000"
+  # Mac/Linux
+  lsof -i :8000
+  ```
+- Fix 3: Ensure .env file exists and has the correct configuration: `cp .env.example .env`
+- Fix 4: Try starting services with verbose output:
+  ```bash
+  uvicorn 1_prof_dash:app --host 127.0.0.1 --port 8000 --reload
+  ```
 
 **Q: The QR Code link says "Site Can't Be Reached" on mobile.**
 - Fix 1: Ensure both laptop and phone are on the same Wi-Fi.
 - Fix 2: Use a Mobile Hotspot from your phone to bypass router isolation.
 - Fix 3: Turn off Windows Firewall temporarily.
+- Fix 4: Verify you're using the correct local IP from `.env` configuration.
 
 **Q: "Internal Server Error" when registering.**
 - Fix: You might be missing a library or have a corrupted DB.
   - Run `pip install python-multipart`.
-  - Delete `https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip`.
-  - Restart `https://raw.githubusercontent.com/Cake-sweet/IR-S/main/prof_db/prof_1/cs50_2024/S_I_2.7.zip`.
+  - Delete `main_app.db`.
+  - Restart `1_prof_dash.py` to recreate the database.
+
+**Q: Design system styles not loading (unstyled page).**
+- Fix 1: Clear browser cache (Ctrl+Shift+Delete)
+- Fix 2: Check browser console for 404 errors on CSS/JS files
+- Fix 3: Verify `static/` folder contains `iris-design-system.css` and `iris-design-system.js`
+- Fix 4: Ensure server is running and accessible at the configured URL
 
 **Q: The AI is slow.**
 - Fix: Face recognition is heavy. On a CPU, it may take 1-3 seconds per verification. For instant results, run on a machine with an NVIDIA GPU.
 # IR-S_rev2
+#   I R - S _ r e v 3  
+ 
