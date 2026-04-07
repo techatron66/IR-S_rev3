@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS • Grading System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/iris-design-system.css">
+    <style>
+        .page-container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .badge.draft { background: #e2e8f0; color: #475569; }
+        .badge.ocr_done { background: #dbeafe; color: #1e40af; }
+        .badge.grading { background: #fef3c7; color: #b45309; animation: pulse 2s infinite; }
+        .badge.published { background: #dcfce7; color: #166534; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .progress-container { width: 100%; min-width: 120px; }
+        .progress-text { font-size: 12px; font-weight: 500; margin-bottom: 4px; color: #64748b; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-wordmark">IRIS Grading</span>
+            </div>
+            
+            <div class="sidebar-section">Navigation</div>
+            <a href="/dashboard" class="nav-item"><span class="nav-label">Live Attendance</span></a>
+            <a href="/manage" class="nav-item"><span class="nav-label">Class Management</span></a>
+            <a href="/grading" class="nav-item active"><span class="nav-label">Grading</span></a>
+            
+            <div class="sidebar-section" style="margin-top: 16px;">Select Class</div>
+            <form method="GET" action="/grading" style="padding: 8px 12px;">
+                <select name="class_id" class="input" onchange="this.form.submit()" style="width: 100%;">
+                    <option value="">-- Choose a class --</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}" {% if c.id == selected_class_id %}selected{% endif %}>
+                        {{ c.name }} ({{ c.batch }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <div class="sidebar-section" style="margin-top: auto;">Account</div>
+            <a href="/logout" class="nav-item" style="color: #ef4444;"><span class="nav-label">Sign Out</span></a>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-container">
+                {% if not selected_class %}
+                <div class="card" style="text-align: center; padding: 48px;">
+                    <h3>Select a Class</h3>
+                    <p style="color: #64748b;">Choose a class from the sidebar to create exams and start grading.</p>
+                </div>
+                {% else %}
+                <div class="main-header">
+                    <div>
+                        <h2>{{ selected_class.name }} Exams</h2>
+                        <p style="color: #64748b; font-size: 14px;">Batch {{ selected_class.batch }}</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 32px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Start New Exam</h3>
+                    </div>
+                    <form action="/grading/upload-question-paper" method="POST" enctype="multipart/form-data" 
+                          style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end;">
+                        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+                        
+                        <div class="form-group">
+                            <label class="form-label">Exam Name</label>
+                            <input type="text" name="exam_name" class="input" required placeholder="e.g. Midterm 1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Exam Date</label>
+                            <input type="date" name="exam_date" class="input" required>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Question Paper (PDF or Image)</label>
+                            <input type="file" name="question_paper" class="input" accept=".pdf,image/*" required>
+                        </div>
+                        <div style="grid-column: span 2; display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" onclick="this.innerHTML='Uploading & Scanning...';">
+                                Upload & Scan Questions →
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Exam History</h3>
+                    </div>
+                    
+                    {% if exams %}
+                    <table class="table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left; padding:12px;">Exam Name</th>
+                                <th style="text-align:left; padding:12px;">Date</th>
+                                <th style="text-align:left; padding:12px;">Status</th>
+                                <th style="text-align:left; padding:12px;">Progress</th>
+                                <th style="text-align:right; padding:12px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr style="border-bottom: 1px solid #e2e8f0;" id="exam-row-{{ exam.id }}" data-status="{{ exam.status }}">
+                                <td style="padding:12px; font-weight: 500;">{{ exam.name }}</td>
+                                <td style="padding:12px; color: #64748b;">{{ exam.exam_date }}</td>
+                                <td style="padding:12px;">
+                                    <span class="badge {{ exam.status }}" id="badge-{{ exam.id }}">{{ exam.status.replace('_', ' ') }}</span>
+                                </td>
+                                <td style="padding:12px;">
+                                    {% if exam.status == 'grading' and exam._job %}
+                                    <div class="progress-container" id="prog-container-{{ exam.id }}">
+                                        <div class="progress-text" id="prog-text-{{ exam.id }}">
+                                            {{ exam._job.processed_sheets }} / {{ exam._job.total_sheets }} processed
+                                        </div>
+                                        <div class="progress-bar-bg">
+                                            <div class="progress-bar-fill" id="prog-fill-{{ exam.id }}" 
+                                                 style="width: {{ (exam._job.processed_sheets / [exam._job.total_sheets, 1]|max) * 100 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span style="color: #94a3b8;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding:12px; text-align:right;">
+                                    {% if exam.status == 'published' %}
+                                    <a href="/grading/results/{{ exam.id }}" class="btn btn-secondary btn-sm" style="margin-right:8px;">Results</a>
+                                    <a href="/grading/export/{{ exam.id }}/csv" class="btn btn-primary btn-sm">Export CSV</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="color: #64748b; padding: 24px 0; text-align: center;">No exams created yet.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const rows = document.querySelectorAll("tr[data-status='grading']");
+            
+            rows.forEach(row => {
+                const examId = row.id.replace('exam-row-', '');
+                pollJob(examId);
+            });
+            
+            function pollJob(examId) {
+                const interval = setInterval(async () => {
+                    try {
+                        const res = await fetch(`/api/grading/job/${examId}`);
+                        const data = await res.json();
+                        
+                        const textEl = document.getElementById(`prog-text-${examId}`);
+                        const fillEl = document.getElementById(`prog-fill-${examId}`);
+                        
+                        if (textEl && fillEl) {
+                            textEl.textContent = `${data.processed} / ${data.total} processed`;
+                            fillEl.style.width = `${data.progress}%`;
+                        }
+                        
+                        if (data.status === 'completed' || data.status === 'failed') {
+                            clearInterval(interval);
+                            window.location.reload();
+                        }
+                    } catch (e) {
+                        console.error('Polling error', e);
+                    }
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

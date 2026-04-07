@@ -3,104 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Check-In</title>
+    <title>IRIS • Student Check-In</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/iris-design-system.css') }}">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #000000;
-            color: white;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px;
+        }
+        
+        .container { 
+            width: 100%;
+            max-width: 420px;
+        }
+        
+        .card {
+            padding: 48px 40px;
+        }
+        
+        h1 { 
+            font-size: 26px; 
+            font-weight: 700; 
+            letter-spacing: -0.5px; 
+            margin-bottom: 32px;
             text-align: center;
         }
-
-        .container {
-            width: 90%;
-            max-width: 400px;
+        
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
         }
-
-        h2 { font-weight: 700; font-size: 28px; margin-bottom: 40px; }
-
-        label {
-            display: block;
-            text-align: left;
+        
+        .form-group { 
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
             font-size: 13px;
-            color: #888;
-            margin-bottom: 8px;
-            margin-left: 5px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
         }
-
-        input[type="text"] {
+        
+        .input {
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+            border-radius: 10px !important;
+        }
+        
+        .btn-camera { 
             width: 100%;
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
+            margin-top: 8px;
+        }
+        
+        #cam { display: none; }
+        
+        .dashboard-link {
+            margin-top: 28px;
+            text-align: center;
             padding: 16px;
-            font-size: 18px;
-            border-radius: 12px;
-            border: none;
-            background: #1c1c1e;
-            color: white;
-            box-sizing: border-box;
-            margin-bottom: 30px;
-        }
-        input:focus { outline: 2px solid #0a84ff; }
-
-        .btn-cam {
-            background-color: #0a84ff;
-            color: white;
-            width: 100%;
-            padding: 18px;
-            border-radius: 14px;
-            font-size: 18px;
-            font-weight: 600;
-            border: none;
+            border-radius: var(--r-md);
+            background: var(--accent-light);
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: background var(--fast);
         }
-        .btn-cam:active { transform: scale(0.96); opacity: 0.8; }
-
-        .status {
-            margin-top: 30px;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 16px;
-            display: none;
+        
+        .dashboard-link:hover { background: rgba(0, 113, 227, 0.15); }
+        
+        .dashboard-link a { 
+            color: var(--accent); 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 14px; 
         }
-        .success { background: rgba(50, 215, 75, 0.2); color: #32d74b; display: block; }
-        .fail { background: rgba(255, 69, 58, 0.2); color: #ff453a; display: block; }
+        
+        #status {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: var(--accent-light);
+            border-radius: 10px;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Attendance</h2>
+        <div class="card">
+            <h1>Attendance Check-In</h1>
 
-        <form>
-            <input type="hidden" id="cid" value="{{ cid }}">
+            {% if error %}
+                <div class="pill pill-red" style="width: 100%; justify-content: center; margin-bottom: 20px;">{{ error }}</div>
+            {% endif %}
 
-            <label>ROLL NUMBER</label>
-            <input type="text" id="roll" placeholder="e.g. 101" required>
+            <form>
+                <input type="hidden" id="cid" value="{{ cid }}">
+                
+                <div class="form-group">
+                    <label class="form-label">Roll Number</label>
+                    <input type="text" id="roll" class="input" placeholder="e.g. 24BCS101" required>
+                </div>
 
-            <input type="file" id="cam" accept="image/*" capture="user" style="display:none" onchange="upload()">
+                <input type="file" id="cam" accept="image/*" capture="user" onchange="upload()">
 
-            <button type="button" class="btn-cam" onclick="document.getElementById('cam').click()">
-                Take Selfie
-            </button>
-        </form>
+                <button type="button" class="btn btn-primary btn-lg btn-camera" onclick="document.getElementById('cam').click()">
+                    📷 Take Selfie
+                </button>
+            </form>
 
-        <div id="status" class="status"></div>
+            <div id="status" style="display: none;"></div>
+
+            <div class="dashboard-link" onclick="goToDashboard()">
+                <a href="#">📊 View My Dashboard</a>
+            </div>
+        </div>
     </div>
 
+    <div class="toast-shelf"></div>
+    <script src="{{ url_for('static', path='js/iris-design-system.js') }}"></script>
     <script>
+        function goToDashboard() {
+            const roll = document.getElementById('roll').value;
+            const cid = document.getElementById('cid').value;
+            if (!roll) { showToast('Enter your roll number first', 'warning'); return; }
+            if (!cid) { showToast('No class ID set. Scan the QR code first', 'warning'); return; }
+            window.location.href = '/dashboard?roll=' + encodeURIComponent(roll) + '&class_id=' + encodeURIComponent(cid);
+        }
+
         async function upload() {
             let statusDiv = document.getElementById("status");
-            statusDiv.className = "status";
             statusDiv.style.display = "block";
-            statusDiv.innerText = "Verifying...";
-            statusDiv.style.color = "#aaa";
-            statusDiv.style.background = "#1c1c1e";
+            showToast("Verifying your identity...", "default");
 
             let fd = new FormData();
             fd.append("file", document.getElementById("cam").files[0]);
@@ -112,17 +159,20 @@
                 let data = await res.json();
 
                 if (data.match) {
-                    statusDiv.innerText = "Check-in Successful";
-                    statusDiv.className = "status success";
+                    showToast("✓ Check-in Successful! Redirecting...", "success");
+                    const roll = document.getElementById("roll").value;
+                    const cid = document.getElementById("cid").value;
+                    setTimeout(() => {
+                        window.location.href = '/dashboard?roll=' + encodeURIComponent(roll) + '&class_id=' + encodeURIComponent(cid);
+                    }, 1500);
                 } else {
-                    statusDiv.innerText = "Verification Failed";
-                    statusDiv.className = "status fail";
+                    showToast("✕ Verification Failed. Try again.", "error");
                 }
             } catch(e) {
-                statusDiv.innerText = "Server Error";
-                statusDiv.className = "status fail";
+                showToast("Server Error. Please try again.", "error");
             }
         }
     </script>
 </body>
+</html>
 </html>

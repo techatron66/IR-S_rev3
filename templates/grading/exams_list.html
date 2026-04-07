@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exams & Grading — IRIS v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/grading.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🏛️</span>
+            <span class="brand-text">IR<em>IS</em></span>
+            <span class="brand-badge">v2</span>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">📊 Attendance</a>
+            <a href="/manage">🏫 Classes</a>
+            <a href="/dashboard/exams" class="active">📋 Exams</a>
+            <a href="/dashboard/disputes">⚠️ Disputes</a>
+            <a href="/dashboard/students">👥 Students</a>
+            <a href="/logout" class="nav-danger">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Exams &amp; Grading</h1>
+                <p class="page-subtitle">Manage exams, upload answer sheets, and view AI-graded results</p>
+            </div>
+            <a href="/dashboard/exam/new" class="btn btn-primary">
+                <span>＋</span> Create New Exam
+            </a>
+        </div>
+
+        {% if not exams %}
+        <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <h2>No Exams Yet</h2>
+            <p>Create your first exam to begin the AI-powered grading workflow.</p>
+            <a href="/dashboard/exam/new" class="btn btn-primary">Create First Exam</a>
+        </div>
+        {% else %}
+        <div class="exams-grid">
+            {% for exam in exams %}
+            <div class="exam-card" onclick="window.location='/dashboard/exam/{{ exam.id }}'">
+                <div class="exam-card-header">
+                    <div class="exam-status-badge status-{{ exam.status }}">{{ exam.status }}</div>
+                    <div class="exam-date">📅 {{ exam.exam_date }}</div>
+                </div>
+                <h3 class="exam-name">{{ exam.exam_name }}</h3>
+                <div class="exam-meta">
+                    <span class="meta-chip">🏫 {{ exam.class_name }}</span>
+                    <span class="meta-chip">❓ {{ exam.question_count }} questions</span>
+                    <span class="meta-chip">🎯 {{ exam.total_marks }} marks</span>
+                </div>
+                {% if exam.job %}
+                <div class="exam-progress-bar-wrap">
+                    <div class="exam-progress-label">
+                        <span>Grading Progress</span>
+                        <span class="mono">{{ exam.job.progress }}%</span>
+                    </div>
+                    <div class="slim-progress">
+                        <div class="slim-fill" style="width: {{ exam.job.progress }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="exam-card-footer">
+                    <a href="/dashboard/exam/{{ exam.id }}" class="btn btn-sm btn-outline">View Details →</a>
+                    {% if exam.status in ('completed', 'published', 'completed_with_errors') %}
+                    <a href="http://localhost:8003/exam/{{ exam.id }}/export/csv" class="btn btn-sm btn-ghost">⬇ CSV</a>
+                    <a href="http://localhost:8003/exam/{{ exam.id }}/export/pdf" class="btn btn-sm btn-ghost">⬇ PDF</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

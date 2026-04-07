@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Extracted Questions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/iris-design-system.css">
+    <style>
+        .page-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .q-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: stretch; background: #fff; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .q-num { font-weight: 600; width: 30px; text-align: center; line-height: 40px; }
+        .q-col { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .q-col-marks { width: 100px; flex-shrink: 0; }
+        .q-text { resize: vertical; min-height: 80px; }
+    </style>
+</head>
+<body style="background: #f4f6fb;">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h2>Review Extracted Questions — {{ exam.name }}</h2>
+        </div>
+    </div>
+    
+    <div class="page-container">
+        <div class="card" style="margin-bottom: 24px;">
+            <p style="color: #64748b; margin-bottom: 0;">
+                The questions below were extracted from your question paper. Edit any that are incorrect, set the marks for each question, and optionally add a reference answer. Then upload the student answer sheets.
+            </p>
+        </div>
+
+        <form action="/grading/confirm-questions" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="exam_id" value="{{ exam.id }}">
+
+            <div id="questions-container">
+                {% for q in extracted_questions %}
+                <div class="q-row">
+                    <div class="q-num">{{ loop.index }}</div>
+                    <div class="q-col">
+                        <textarea class="input q-text" name="q_texts" required>{{ q.question_text }}</textarea>
+                    </div>
+                    <div class="q-col" style="flex: 1;">
+                        <textarea class="input q-text" name="q_refs" placeholder="Optional reference answer — leave blank to let AI judge freely"></textarea>
+                    </div>
+                    <div class="q-col-marks">
+                        <input type="number" step="0.5" class="input" name="q_marks" placeholder="Max" required>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.parentElement.remove()" style="margin-top: auto; padding: 6px;">Remove</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-secondary" onclick="addQuestion()" style="margin-bottom: 32px;">+ Add Question</button>
+
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Upload Answer Sheets</h3>
+                <div class="form-group">
+                    <p style="font-size: 14px; color: #b45309; background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                        ⚠️ Each file must be named exactly as the student's roll number. E.g.: 21CS001.pdf, 21CS002.pdf
+                    </p>
+                    <input type="file" name="answer_sheets" class="input" accept=".pdf" multiple required>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary btn-lg" onclick="this.innerHTML='Processing...'">Confirm & Start Grading</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function addQuestion() {
+            const container = document.getElementById('questions-container');
+            const count = container.children.length + 1;
+            const html = `
+                <div class="q-row">
+                    <div class="q-num">${count}</div>
+                    <div class="q-col">
+                        <textarea class="input q-text" name="q_texts" required placeholder="Question text..."></textarea>
+                    </div>
+                    <div class="q-col" style="flex: 1;">
+                        <textarea class="input q-text" name="q_refs" placeholder="Optional reference answer — leave blank to let AI judge freely"></textarea>
+                    </div>
+                    <div class="q-col-marks">
+                        <input type="number" step="0.5" class="input" name="q_marks" placeholder="Max" required>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.parentElement.remove()" style="margin-top: auto; padding: 6px;">Remove</button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+    </script>
+</body>
+</html>

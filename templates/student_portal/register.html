@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration — IRIS v2</title>
+    <meta name="description" content="IRIS v2 Student Portal — Create your student account.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/student_portal.css">
+    <style>
+        body { margin: 0; min-height: 100vh; display: flex; background: var(--bg); }
+
+        .login-left {
+            flex: 1;
+            background: linear-gradient(145deg, #312E81 0%, #1E1B4B 40%, #0F0D29 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 60px;
+            position: relative; overflow: hidden;
+        }
+        .login-left::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(99,102,241,0.3) 0%, transparent 60%),
+                        radial-gradient(circle at 80% 20%, rgba(245,158,11,0.15) 0%, transparent 50%);
+        }
+        .login-left-content { position: relative; z-index: 1; text-align: center; color: white; }
+        .left-brand { font-family: 'Fraunces', serif; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px; }
+        .left-brand em { color: #F59E0B; font-style: italic; }
+        .left-tagline { font-family: 'DM Sans', sans-serif; font-size: 18px; color: rgba(255,255,255,0.7); margin-bottom: 48px; }
+        .left-features { list-style: none; padding: 0; text-align: left; }
+        .left-features li { font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);
+            padding: 10px 0; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .left-features li span { font-size: 20px; }
+
+        .login-right {
+            width: 480px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg); padding: 60px 40px;
+        }
+
+        .login-form-wrap { width: 100%; max-width: 360px; }
+        .login-welcome { font-family: 'Fraunces', serif; font-size: 32px; color: var(--text-primary); margin-bottom: 8px; }
+        .login-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 40px; }
+
+        .float-group { position: relative; margin-bottom: 24px; }
+        .float-input {
+            width: 100%; box-sizing: border-box;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 16px 8px;
+            font-size: 16px; font-family: 'DM Sans', sans-serif;
+            background: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .float-input:focus { border-color: var(--primary); }
+        .float-label {
+            position: absolute; top: 50%; left: 16px;
+            transform: translateY(-50%);
+            font-size: 16px; color: var(--text-muted);
+            transition: all 0.2s; pointer-events: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .float-input:focus + .float-label,
+        .float-input:not(:placeholder-shown) + .float-label {
+            top: 10px; font-size: 11px; font-weight: 600;
+            color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4338CA, #6366F1);
+            color: white;
+            border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(67,56,202,0.35);
+            margin-bottom: 16px;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(67,56,202,0.5); }
+        .login-btn:active { transform: translateY(0); }
+
+        .login-error {
+            background: #FEF2F2; border: 1px solid #FECACA;
+            color: #B91C1C; border-radius: 8px;
+            padding: 12px 16px; font-size: 14px;
+            margin-bottom: 20px;
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .form-appear { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .form-appear:nth-child(1) { animation-delay: 0.1s; }
+        .form-appear:nth-child(2) { animation-delay: 0.2s; }
+        .form-appear:nth-child(3) { animation-delay: 0.3s; }
+        .form-appear:nth-child(4) { animation-delay: 0.4s; }
+
+        .auth-link { text-align: center; font-size: 14px; margin-top: 10px; color: var(--text-secondary); }
+        .auth-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .auth-link a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .login-left { display: none; }
+            .login-right { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-left">
+        <div class="login-left-content">
+            <div class="left-brand">IR<em>IS</em></div>
+            <p class="left-tagline">Intelligent Recognition &amp; Institutional System</p>
+            <ul class="left-features">
+                <li><span>📊</span> Real-time attendance tracking</li>
+                <li><span>🤖</span> AI-powered exam grading</li>
+                <li><span>📈</span> Detailed performance analytics</li>
+                <li><span>⚠️</span> Dispute resolution portal</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <div class="login-form-wrap">
+            <h1 class="login-welcome form-appear">Create Account</h1>
+            <p class="login-sub form-appear">Join the IRIS Student Portal</p>
+
+            {% if error %}
+            <div class="login-error">{{ error }}</div>
+            {% endif %}
+
+            <form action="/register" method="POST">
+                <div class="float-group form-appear">
+                    <input type="text" name="name" id="name" class="float-input" placeholder=" " required autocomplete="name">
+                    <label class="float-label" for="name">Full Name</label>
+                </div>
+                <div class="float-group form-appear">
+                    <input type="text" name="roll_no" id="roll_no" class="float-input" placeholder=" " required autocomplete="username">
+                    <label class="float-label" for="roll_no">Roll Number</label>
+                </div>
+                <div class="float-group form-appear">
+                    <input type="password" name="password" id="password" class="float-input" placeholder=" " required autocomplete="new-password">
+                    <label class="float-label" for="password">Password</label>
+                </div>
+                <button type="submit" class="login-btn form-appear">Create Account →</button>
+            </form>
+            <div class="auth-link form-appear">
+                Already have an account? <a href="/login">Sign In</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

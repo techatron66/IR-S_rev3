@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students — IRIS v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/grading.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🏛️</span>
+            <span class="brand-text">IR<em>IS</em></span>
+            <span class="brand-badge">v2</span>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">📊 Attendance</a>
+            <a href="/manage">🏫 Classes</a>
+            <a href="/dashboard/exams">📋 Exams</a>
+            <a href="/dashboard/disputes">⚠️ Disputes</a>
+            <a href="/dashboard/students" class="active">👥 Students</a>
+            <a href="/logout" class="nav-danger">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Student Management</h1>
+                <p class="page-subtitle">{{ students | length }} students enrolled across {{ classes | length }} classes</p>
+            </div>
+            <a href="/dashboard/students/import" class="btn btn-primary">⬆ Import Students (CSV)</a>
+        </div>
+
+        <div class="form-card">
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Name</th>
+                            <th>Class</th>
+                            <th>Portal Account</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td class="mono">{{ s.roll_number }}</td>
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.class_name }}</td>
+                            <td>
+                                {% if s.has_portal %}
+                                <span style="color:#4ADE80;font-size:12px;font-weight:600">✓ Active</span>
+                                {% else %}
+                                <span style="color:var(--text-muted);font-size:12px">— Not created</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

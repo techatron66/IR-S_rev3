@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disputes — IRIS v2 Professor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/grading.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🏛️</span>
+            <span class="brand-text">IR<em>IS</em></span>
+            <span class="brand-badge">v2</span>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">📊 Attendance</a>
+            <a href="/manage">🏫 Classes</a>
+            <a href="/dashboard/exams">📋 Exams</a>
+            <a href="/dashboard/disputes" class="active">⚠️ Disputes
+                {% if pending_count > 0 %}<span style="background:#EF4444;color:white;border-radius:100px;padding:1px 7px;font-size:10px;margin-left:4px">{{ pending_count }}</span>{% endif %}
+            </a>
+            <a href="/dashboard/students">👥 Students</a>
+            <a href="/logout" class="nav-danger">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Student Disputes</h1>
+                <p class="page-subtitle">Review and respond to attendance and marks disputes</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+                <span style="font-size:13px;color:var(--text-muted)">Page {{ page }} / {{ total_pages }}</span>
+            </div>
+        </div>
+
+        {% if not disputes %}
+        <div class="empty-state">
+            <div class="empty-icon">⚖️</div>
+            <h2>No Disputes</h2>
+            <p>Students can raise disputes about attendance or exam marks from their portal.</p>
+        </div>
+        {% else %}
+        <div style="display:flex;flex-direction:column;gap:16px">
+            {% for d in disputes %}
+            <div class="form-card" style="margin-bottom:0">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+                            <span class="exam-status-badge {% if d.status == 'pending' %}status-grading{% elif d.status == 'reviewing' %}status-ready{% elif d.status == 'accepted' %}status-completed{% else %}status-failed{% endif %}">
+                                {{ d.status }}
+                            </span>
+                            <span class="mono" style="font-size:12px;color:var(--text-muted)">#{{ d.id }}</span>
+                            <span style="background:rgba(255,255,255,0.08);border:1px solid var(--border);padding:2px 10px;border-radius:100px;font-size:11px;font-weight:600;text-transform:uppercase">{{ d.type }}</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:600;margin-bottom:4px">{{ d.student_name }} — {{ d.roll_no }}</div>
+                        <div style="font-size:13px;color:var(--text-muted)">Ref ID: {{ d.ref_id }} &nbsp;•&nbsp; {{ d.created_at }}</div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+                    <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;margin-bottom:8px">Student's Reason</div>
+                    <div style="font-size:14px;color:var(--text-secondary)">{{ d.reason }}</div>
+                </div>
+
+                {% if d.professor_response %}
+                <div style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.2);border-radius:10px;padding:16px;margin-bottom:16px">
+                    <div style="font-size:11px;color:var(--teal);font-weight:700;text-transform:uppercase;margin-bottom:8px">Your Response</div>
+                    <div style="font-size:14px;color:var(--text-secondary)">{{ d.professor_response }}</div>
+                </div>
+                {% endif %}
+
+                {% if d.status == 'pending' or d.status == 'reviewing' %}
+                <form action="/dashboard/dispute/{{ d.id }}/resolve" method="POST" style="display:flex;flex-direction:column;gap:12px">
+                    <div style="display:flex;gap:12px">
+                        <select name="action" class="form-input" style="flex:0 0 150px">
+                            <option value="accept">✓ Accept</option>
+                            <option value="reject">✗ Reject</option>
+                        </select>
+                        <textarea name="response" class="form-input" rows="2"
+                            placeholder="Write your response to the student..." required style="flex:1"></textarea>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end">
+                        <button type="submit" class="btn btn-primary btn-sm">Submit Response</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:32px">
+            {% if page > 1 %}<a href="?page={{ page - 1 }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+            {% if page < total_pages %}<a href="?page={{ page + 1 }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

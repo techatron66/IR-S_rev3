@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Exam — IRIS v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/grading.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🏛️</span>
+            <span class="brand-text">IR<em>IS</em></span>
+            <span class="brand-badge">v2</span>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">📊 Attendance</a>
+            <a href="/manage">🏫 Classes</a>
+            <a href="/dashboard/exams" class="active">📋 Exams</a>
+            <a href="/dashboard/disputes">⚠️ Disputes</a>
+            <a href="/dashboard/students">👥 Students</a>
+            <a href="/logout" class="nav-danger">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <a href="/dashboard/exams" class="back-link">← Back to Exams</a>
+                <h1 class="page-title">Create New Exam</h1>
+                <p class="page-subtitle">Define exam metadata and questions for AI-powered grading</p>
+            </div>
+        </div>
+
+        <form id="create-exam-form" action="/dashboard/exam/new" method="POST">
+            <!-- Exam Details -->
+            <div class="form-card">
+                <h2 class="form-section-title">📋 Exam Details</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="exam_name">Exam Name</label>
+                        <input type="text" id="exam_name" name="exam_name" class="form-input"
+                               placeholder="e.g. Mid-Semester Exam 2025" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="exam_date">Exam Date</label>
+                        <input type="date" id="exam_date" name="exam_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="class_id">Class</label>
+                        <select id="class_id" name="class_id" class="form-input" required>
+                            <option value="" disabled selected>-- Select Class --</option>
+                            {% for c in classes %}
+                            <option value="{{ c.id }}">{{ c.name }} (Batch {{ c.batch }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Table -->
+            <div class="form-card">
+                <div class="section-header-row">
+                    <h2 class="form-section-title">❓ Questions</h2>
+                    <div class="section-actions">
+                        <span class="total-marks-display">Total: <strong id="total-marks-display">0</strong> marks</span>
+                        <button type="button" class="btn btn-secondary" onclick="addQuestion()">＋ Add Row</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="questions-table">
+                        <thead>
+                            <tr>
+                                <th style="width:60px">Q#</th>
+                                <th>Question Text</th>
+                                <th style="width:100px">Max Marks</th>
+                                <th>Reference Answer <span class="optional-label">optional</span></th>
+                                <th style="width:50px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="questions-tbody">
+                            <!-- JS adds rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-ghost mt-2" onclick="addQuestion()">＋ Add Another Question</button>
+            </div>
+
+            <!-- Hidden field for JSON -->
+            <input type="hidden" name="questions_json" id="questions_json_field">
+
+            <div class="form-actions">
+                <a href="/dashboard/exams" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary" onclick="return prepareSubmit()">
+                    Save &amp; Continue →
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let questionCount = 0;
+
+        function addQuestion(qNum = null, qText = '', maxMarks = 10, refAnswer = '') {
+            questionCount++;
+            const num = qNum || questionCount;
+            const tbody = document.getElementById('questions-tbody');
+            const row = document.createElement('tr');
+            row.className = 'question-row';
+            row.dataset.row = questionCount;
+            row.innerHTML = `
+                <td><input type="number" class="form-input q-num" value="${num}" min="1" style="width:55px"></td>
+                <td><textarea class="form-input q-text" rows="2" placeholder="Enter question text..." required>${qText}</textarea></td>
+                <td><input type="number" class="form-input q-marks" value="${maxMarks}" min="0" step="0.5" oninput="updateTotal()"></td>
+                <td><textarea class="form-input q-ref" rows="2" placeholder="Reference answer (helps AI grade more accurately)">${refAnswer}</textarea></td>
+                <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)" title="Remove">✕</button></td>
+            `;
+            tbody.appendChild(row);
+            updateTotal();
+            row.querySelector('.q-text').focus();
+        }
+
+        function removeRow(btn) {
+            btn.closest('tr').remove();
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const inputs = document.querySelectorAll('.q-marks');
+            let total = 0;
+            inputs.forEach(i => total += parseFloat(i.value) || 0);
+            document.getElementById('total-marks-display').textContent = total.toFixed(1);
+        }
+
+        function prepareSubmit() {
+            const rows = document.querySelectorAll('.question-row');
+            if (rows.length === 0) {
+                alert('Please add at least one question.');
+                return false;
+            }
+            const questions = [];
+            let valid = true;
+            rows.forEach(row => {
+                const qNum = parseInt(row.querySelector('.q-num').value);
+                const qText = row.querySelector('.q-text').value.trim();
+                const maxMarks = parseFloat(row.querySelector('.q-marks').value);
+                const refAnswer = row.querySelector('.q-ref').value.trim();
+                if (!qText || isNaN(maxMarks) || maxMarks < 0) { valid = false; return; }
+                questions.push({ q_number: qNum, question_text: qText, max_marks: maxMarks, reference_answer: refAnswer });
+            });
+            if (!valid) {
+                alert('Please fill all required question fields.');
+                return false;
+            }
+            document.getElementById('questions_json_field').value = JSON.stringify(questions);
+            return true;
+        }
+
+        // Add 3 default rows on load
+        window.onload = () => {
+            for (let i = 0; i < 3; i++) addQuestion(i + 1);
+            // Set today's date
+            document.getElementById('exam_date').valueAsDate = new Date();
+        };
+    </script>
+</body>
+</html>

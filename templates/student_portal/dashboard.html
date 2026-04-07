@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — IRIS Student Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/student_portal.css">
+</head>
+<body class="portal-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sb-logo">IR<em>IS</em></span>
+            <span class="sb-version">v2</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item active" id="nav-dashboard">
+                <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+            </a>
+            <a href="/attendance" class="nav-item" id="nav-attendance">
+                <span class="nav-icon">📅</span><span class="nav-label">Attendance</span>
+            </a>
+            <a href="/marks" class="nav-item" id="nav-marks">
+                <span class="nav-icon">📊</span><span class="nav-label">My Marks</span>
+            </a>
+            <a href="/disputes" class="nav-item" id="nav-disputes">
+                <span class="nav-icon">⚠️</span><span class="nav-label">Disputes</span>
+                {% if pending_disputes > 0 %}
+                <span class="nav-badge">{{ pending_disputes }}</span>
+                {% endif %}
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <div class="user-avatar">{{ user.name[0] | upper }}</div>
+                <div class="user-info">
+                    <div class="user-name">{{ user.name }}</div>
+                    <div class="user-roll">{{ user.roll_no }}</div>
+                </div>
+            </div>
+            <a href="/logout" class="logout-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+        <header class="portal-topbar">
+            <button class="hamburger" onclick="toggleSidebar()" id="hamburger">☰</button>
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-right">
+                <button class="notif-btn" onclick="loadNotifications()" id="notif-btn">
+                    🔔
+                    <span class="notif-badge" id="notif-badge" style="display:none">{{ unread_notifs }}</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="portal-content">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <div>
+                    <h1 class="welcome-title">Good day, {{ user.name.split()[0] }}! 👋</h1>
+                    <p class="welcome-sub">Here's your academic snapshot</p>
+                </div>
+                <div class="welcome-date">{{ now if now else '' }}</div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg,#6366F1,#4338CA)">📅</div>
+                    <div class="stat-body">
+                        <div class="stat-label">Attendance Rate</div>
+                        <div class="stat-value">{{ attendance_pct }}%</div>
+                        <div class="stat-sub">{{ attended }} / {{ total_sessions }} sessions</div>
+                    </div>
+                    <div class="stat-bar-wrap">
+                        <div class="stat-bar {% if attendance_pct < 75 %}bar-danger{% elif attendance_pct < 85 %}bar-warn{% else %}bar-ok{% endif %}" style="width: {{ attendance_pct }}%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg,#10B981,#059669)">📚</div>
+                    <div class="stat-body">
+                        <div class="stat-label">Enrolled Classes</div>
+                        <div class="stat-value">{{ classes | length }}</div>
+                        <div class="stat-sub">Active this semester</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg,#F59E0B,#D97706)">📝</div>
+                    <div class="stat-body">
+                        <div class="stat-label">Exams</div>
+                        <div class="stat-value">{{ exam_count }}</div>
+                        <div class="stat-sub">Results available</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg,#EF4444,#DC2626)">⚠️</div>
+                    <div class="stat-body">
+                        <div class="stat-label">Pending Disputes</div>
+                        <div class="stat-value">{{ pending_disputes }}</div>
+                        <div class="stat-sub">Awaiting response</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="quick-links">
+                <h2 class="section-heading">Quick Actions</h2>
+                <div class="quick-grid">
+                    <a href="/attendance" class="quick-card">
+                        <span class="quick-icon">📅</span>
+                        <div>
+                            <div class="quick-title">View Attendance</div>
+                            <div class="quick-desc">See session-wise breakdown and heatmap</div>
+                        </div>
+                        <span class="quick-arrow">→</span>
+                    </a>
+                    <a href="/marks" class="quick-card">
+                        <span class="quick-icon">📊</span>
+                        <div>
+                            <div class="quick-title">Check Marks</div>
+                            <div class="quick-desc">View scores, AI feedback and class rank</div>
+                        </div>
+                        <span class="quick-arrow">→</span>
+                    </a>
+                    <a href="/disputes" class="quick-card">
+                        <span class="quick-icon">📝</span>
+                        <div>
+                            <div class="quick-title">Raise Dispute</div>
+                            <div class="quick-desc">Contest attendance or grading decisions</div>
+                        </div>
+                        <span class="quick-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Classes List -->
+            <div class="classes-section">
+                <h2 class="section-heading">My Classes</h2>
+                {% if classes %}
+                <div class="class-pills">
+                    {% for c in classes %}
+                    <div class="class-pill">
+                        <div class="class-pill-icon">🏫</div>
+                        <div>
+                            <div class="pill-name">{{ c.name }}</div>
+                            <div class="pill-batch">Batch {{ c.batch }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No classes assigned yet. Contact your professor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifications Panel (slide-in) -->
+    <div id="notif-panel" class="notif-panel hidden">
+        <div class="notif-panel-header">
+            <h3>Notifications</h3>
+            <button onclick="closeNotifications()">✕</button>
+        </div>
+        <div id="notif-list"><p class="text-muted" style="padding:16px">Loading...</p></div>
+    </div>
+    <div id="notif-overlay" class="overlay hidden" onclick="closeNotifications()"></div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        async function loadNotifications() {
+            const panel = document.getElementById('notif-panel');
+            const overlay = document.getElementById('notif-overlay');
+            panel.classList.toggle('hidden');
+            overlay.classList.toggle('hidden');
+
+            const res = await fetch('/notifications');
+            const data = await res.json();
+            const list = document.getElementById('notif-list');
+            if (data.notifications.length === 0) {
+                list.innerHTML = '<p class="text-muted" style="padding:16px">No notifications</p>';
+                return;
+            }
+            list.innerHTML = data.notifications.map(n => `
+                <div class="notif-item ${n.read ? 'read' : 'unread'}" onclick="markRead(${n.id}, this)">
+                    <div class="notif-msg">${n.message}</div>
+                    <div class="notif-time">${new Date(n.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+            document.getElementById('notif-badge').textContent = data.unread_count;
+            document.getElementById('notif-badge').style.display = data.unread_count > 0 ? 'flex' : 'none';
+        }
+
+        function closeNotifications() {
+            document.getElementById('notif-panel').classList.add('hidden');
+            document.getElementById('notif-overlay').classList.add('hidden');
+        }
+
+        async function markRead(id, el) {
+            await fetch(`/notifications/${id}/read`, { method: 'POST' });
+            el.classList.remove('unread');
+            el.classList.add('read');
+        }
+
+        // Poll notifications every 30s
+        setInterval(async () => {
+            const res = await fetch('/notifications');
+            const data = await res.json();
+            const badge = document.getElementById('notif-badge');
+            badge.textContent = data.unread_count;
+            badge.style.display = data.unread_count > 0 ? 'flex' : 'none';
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Marks — IRIS Student Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/student_portal.css">
+    <style>
+        .exam-card { background: var(--card); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .exam-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .exam-card-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .exam-card-meta { font-size: 13px; color: var(--text-muted); }
+
+        /* Score Display */
+        .score-section { display: flex; align-items: center; gap: 32px; margin: 24px 0; flex-wrap: wrap; }
+        .score-main { text-align: center; }
+        .score-fraction { font-size: 36px; font-weight: 700; color: var(--text-primary); }
+        .score-denom { font-size: 20px; color: var(--text-muted); font-weight: 400; }
+        .score-pct { display: inline-block; padding: 4px 14px; border-radius: 100px; font-size: 14px; font-weight: 700; margin-top: 8px; }
+        .pct-high { background: #DCFCE7; color: #15803D; }
+        .pct-mid { background: #FEF9C3; color: #A16207; }
+        .pct-low { background: #FEE2E2; color: #DC2626; }
+
+        .rank-badge { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 12px; padding: 12px 20px; }
+        .rank-trophy { font-size: 28px; }
+        .rank-text { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+        .rank-of { font-size: 14px; color: var(--text-muted); }
+
+        /* Class avg bar */
+        .avg-section { flex: 1; min-width: 200px; }
+        .avg-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .avg-bars { display: flex; flex-direction: column; gap: 8px; }
+        .avg-bar-row { display: flex; align-items: center; gap: 10px; }
+        .avg-bar-label { font-size: 12px; color: var(--text-muted); width: 70px; }
+        .avg-bar-track { flex: 1; height: 8px; background: #E2E8F0; border-radius: 100px; overflow: hidden; }
+        .avg-bar-fill { height: 100%; border-radius: 100px; }
+        .fill-you { background: var(--primary); }
+        .fill-avg { background: #94A3B8; }
+        .avg-bar-val { font-size: 12px; font-weight: 600; color: var(--text-primary); width: 35px; text-align: right; }
+
+        /* Question Breakdown */
+        .breakdown-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; font-family: inherit; color: var(--text-secondary); transition: all 0.2s; margin-top: 8px; }
+        .breakdown-toggle:hover { background: var(--surface); }
+        .breakdown-content { display: none; margin-top: 16px; }
+        .breakdown-content.open { display: block; }
+        .breakdown-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .breakdown-table th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        .breakdown-table td { padding: 12px; border-bottom: 1px solid var(--border-light); }
+        .breakdown-table tr:last-child td { border-bottom: none; }
+        .score-pip { display: inline-flex; align-items: center; gap: 6px; }
+        .pip-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .pip-full { background: #22C55E; }
+        .pip-partial { background: #EAB308; }
+        .pip-zero { background: #EF4444; }
+        .concept-tag { display: inline-block; background: #FEF3C7; color: #92400E; border-radius: 100px; padding: 2px 8px; font-size: 11px; margin: 2px; }
+
+        .pdf-btn { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg,#4338CA,#6366F1); color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(67,56,202,0.35); }
+    </style>
+</head>
+<body class="portal-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><span class="sb-logo">IR<em>IS</em></span><span class="sb-version">v2</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></a>
+            <a href="/attendance" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Attendance</span></a>
+            <a href="/marks" class="nav-item active"><span class="nav-icon">📊</span><span class="nav-label">My Marks</span></a>
+            <a href="/disputes" class="nav-item"><span class="nav-icon">⚠️</span><span class="nav-label">Disputes</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <div class="user-avatar">{{ user.name[0] }}</div>
+                <div class="user-info"><div class="user-name">{{ user.name }}</div><div class="user-roll">{{ user.roll_no }}</div></div>
+            </div>
+            <a href="/logout" class="logout-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <main class="portal-main">
+        <header class="portal-topbar">
+            <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <div class="topbar-title">My Marks</div>
+            <div class="topbar-right">
+                <button class="notif-btn">🔔 <span class="notif-badge" id="notif-badge" {% if unread_notifs == 0 %}style="display:none"{% endif %}>{{ unread_notifs }}</span></button>
+            </div>
+        </header>
+
+        <div class="portal-content">
+            <h1 class="page-title-inline">Exam Results</h1>
+            <p class="page-sub">Your scores, AI feedback, and class standing</p>
+
+            {% if not exam_data %}
+            <div class="empty-state-portal">
+                <div style="font-size:48px">📊</div>
+                <h3>No results yet</h3>
+                <p>Your exam results will appear here once your professor publishes them.</p>
+            </div>
+            {% endif %}
+
+            {% for ed in exam_data %}
+            <div class="exam-card">
+                <div class="exam-card-header">
+                    <div>
+                        <div class="exam-card-title">{{ ed.exam.exam_name }}</div>
+                        <div class="exam-card-meta">{{ ed.class_name }} ({{ ed.batch }}) &nbsp;•&nbsp; 📅 {{ ed.exam.exam_date }}</div>
+                    </div>
+                    <a href="http://localhost:8003/exam/{{ ed.exam.id }}/student/{{ user.roll_no }}/report/pdf"
+                       class="pdf-btn" target="_blank">⬇ My Report</a>
+                </div>
+
+                <!-- Score Display -->
+                <div class="score-section">
+                    <div class="score-main">
+                        <div class="score-fraction">
+                            {{ ed.my_total }}<span class="score-denom"> / {{ ed.exam.total_marks }}</span>
+                        </div>
+                        <span class="score-pct {% if ed.percentage >= 75 %}pct-high{% elif ed.percentage >= 40 %}pct-mid{% else %}pct-low{% endif %}">
+                            {{ ed.percentage }}%
+                        </span>
+                    </div>
+
+                    <div class="rank-badge">
+                        <div class="rank-trophy">{% if ed.rank == 1 %}🥇{% elif ed.rank == 2 %}🥈{% elif ed.rank == 3 %}🥉{% else %}📊{% endif %}</div>
+                        <div>
+                            <div class="rank-text">Rank {{ ed.rank }}</div>
+                            <div class="rank-of">of {{ ed.total_students }} students</div>
+                        </div>
+                    </div>
+
+                    <div class="avg-section">
+                        <div class="avg-label">Score Comparison</div>
+                        <div class="avg-bars">
+                            <div class="avg-bar-row">
+                                <div class="avg-bar-label">You</div>
+                                <div class="avg-bar-track">
+                                    <div class="avg-bar-fill fill-you" style="width: {{ ed.percentage }}%"></div>
+                                </div>
+                                <div class="avg-bar-val">{{ ed.my_total }}</div>
+                            </div>
+                            <div class="avg-bar-row">
+                                <div class="avg-bar-label">Class Avg</div>
+                                <div class="avg-bar-track">
+                                    <div class="avg-bar-fill fill-avg" style="width: {{ (ed.class_avg / ed.exam.total_marks * 100) if ed.exam.total_marks else 0 }}%"></div>
+                                </div>
+                                <div class="avg-bar-val">{{ ed.class_avg }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Breakdown -->
+                <button class="breakdown-toggle" onclick="toggleBreakdown({{ loop.index }})">
+                    📋 View Question-by-Question Breakdown
+                </button>
+                <div id="breakdown-{{ loop.index }}" class="breakdown-content">
+                    <table class="breakdown-table">
+                        <thead>
+                            <tr><th>Q#</th><th>Score</th><th>Status</th><th>AI Feedback</th><th>Missing Concepts</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for q in ed.questions %}
+                            <tr>
+                                <td><strong>Q{{ q.q_number }}</strong></td>
+                                <td>
+                                    <span class="score-pip">
+                                        <span class="pip-dot {% if q.awarded_marks >= q.max_marks %}pip-full{% elif q.awarded_marks > 0 %}pip-partial{% else %}pip-zero{% endif %}"></span>
+                                        {{ q.awarded_marks }} / {{ q.max_marks }}
+                                        {% if q.overridden %}<span style="font-size:11px;color:var(--text-muted)">(revised)</span>{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="method-chip
+                                        {% if q.status == 'graded' %}method-selfie
+                                        {% elif q.status == 'manual_review' %}method-manual
+                                        {% else %}method-absent{% endif %}">
+                                        {{ q.status }}
+                                    </span>
+                                </td>
+                                <td style="max-width:300px;font-size:13px;color:var(--text-secondary)">{{ q.ai_feedback or '—' }}</td>
+                                <td>
+                                    {% for concept in q.missing_concepts %}
+                                    <span class="concept-tag">{{ concept }}</span>
+                                    {% endfor %}
+                                    {% if not q.missing_concepts %}—{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script>
+        function toggleBreakdown(idx) {
+            document.getElementById('breakdown-' + idx).classList.toggle('open');
+        }
+
+        setInterval(async () => {
+            const res = await fetch('/notifications');
+            const data = await res.json();
+            const badge = document.getElementById('notif-badge');
+            badge.textContent = data.unread_count;
+            badge.style.display = data.unread_count > 0 ? 'flex' : 'none';
+        }, 30000);
+    </script>
+</body>
+</html>

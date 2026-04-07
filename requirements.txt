@@ -1,13 +1,33 @@
+# ── Core (v1 inherited) ────────────────────────────────────────────────────────
 fastapi
 uvicorn[standard]
-python-multipart
+sqlmodel
 deepface
+retina-face
+qrcode[pil]
+python-multipart
+jinja2
+aiofiles
 opencv-python-headless
 numpy
 pandas
 requests
-jinja2
-sqlmodel
 pillow
 tf-keras
 scipy
+python-dotenv
+
+# ── Grading Engine (v2 new) ────────────────────────────────────────────────────
+pdfplumber==0.11.4
+pdf2image==1.17.0
+pytesseract==0.3.13
+httpx==0.27.0
+tenacity==8.3.0
+reportlab==4.2.0
+
+# ── Student Portal Auth (v2 new) ───────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── Settings ───────────────────────────────────────────────────────────────────
+pydantic-settings==2.3.0

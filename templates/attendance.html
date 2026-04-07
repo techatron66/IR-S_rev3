@@ -2,171 +2,196 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Live Attendance</title>
+    <title>IRIS • Live Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/iris-design-system.css') }}">
     <style>
-        :root { --primary: #002147; --gold: #c5a059; --text: #1a1a1a; --success: #2e7d32; --error: #c62828; }
-
-        body {
-            font-family: "Segoe UI", serif;
-            color: var(--text);
-            margin: 0;
-
-            /* --- UNIVERSITY BACKGROUND --- */
-            /* High-quality Library/Campus image with a white/blue overlay */
-            background: linear-gradient(rgba(240, 244, 248, 0.92), rgba(240, 244, 248, 0.92)),
-                        url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed; /* Professional "Parallax" feel */
-            min-height: 100vh;
-        }
-
-        .navbar {
-            background: var(--primary);
-            color: white;
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid var(--gold);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; margin-left: 20px; font-weight: 500; font-size: 14px; transition: 0.2s; }
-        .nav-links a:hover { color: white; }
-        .nav-links a.active { color: white; border-bottom: 2px solid var(--gold); padding-bottom: 4px; }
-
-        .container { padding: 40px; max-width: 1400px; margin: auto; }
-
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            /* Deeper shadow to stand out against the textured background */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; }
-        .qr-thumbnail { width: 100%; border: 1px solid #ddd; padding: 5px; cursor: zoom-in; background: white; }
-
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; background: #f8f9fa; padding: 12px; color: var(--primary); border-bottom: 2px solid #ddd; text-transform: uppercase; font-size: 13px; font-weight: 700; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-
+        .qr-thumbnail { cursor: pointer; border-radius: var(--r-lg); transition: transform var(--mid) var(--spring); }
+        .qr-thumbnail:hover { transform: scale(1.02); }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 34px; transition: .4s; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
-        input:checked + .slider { background-color: var(--success); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 34px; transition: background var(--fast); }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: transform var(--fast); }
+        input:checked + .slider { background-color: var(--green); }
         input:checked + .slider:before { transform: translateX(18px); }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,33,71,0.9); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .dashboard-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .student-access { text-align: center; }
+        .qr-box { background: var(--surface-inset); padding: 16px; border-radius: var(--r-lg); margin-bottom: 12px; }
+        .alert-present { background: var(--green-bg); }
+        .alert-absent { background: var(--red-bg); }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div style="font-size: 24px; font-family: Georgia, serif; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-            <span>🏛️</span> IR!S
-        </div>
-        <div class="nav-links">
-            <a href="/dashboard" class="active">LIVE ATTENDANCE</a>
-            <a href="/manage">CLASS MANAGEMENT</a>
-            <a href="/logout" style="color: #ffcccc;">Sign Out</a>
-        </div>
-    </div>
+    <div class="app-shell">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-wordmark">IRIS</span>
+                <button class="sidebar-toggle" id="sidebar-toggle"></button>
+            </div>
 
-    <div class="container">
-        <div class="card" style="border-left: 5px solid var(--gold);">
-            <form method="GET" action="/dashboard">
-                <label style="font-size:12px; color:#666; font-weight:bold; text-transform:uppercase;">Active Academic Session</label><br>
-                <select name="class_id" onchange="this.form.submit()" style="padding: 10px; font-size: 16px; width: 300px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc;">
-                    <option value="" disabled selected>-- Select Class --</option>
-                    {% for c in classes %}
-                    <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>
-                        {{ c.name }} (Batch {{ c.batch }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
+            <div class="sidebar-section">Navigation</div>
+            <a href="/dashboard" class="nav-item active">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z"/></svg>
+                <span class="nav-label">Live Attendance</span>
+            </a>
+            <a href="/manage" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span class="nav-label">Classes</span>
+            </a>
+            <a href="/grading" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/></svg>
+                <span class="nav-label">Grading</span>
+            </a>
 
-        {% if selected_class %}
-        <input type="hidden" id="current_class_id" value="{{ selected_class.id }}">
+            <div class="sidebar-section" style="margin-top: 20px;">Account</div>
+            <a href="/logout" class="nav-item" style="color: var(--red);">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4a2 2 0 00-2 2v14a2 2 0 002 2h8v-2H4V5z"/></svg>
+                <span class="nav-label">Sign Out</span>
+            </a>
+        </nav>
 
-        <div class="dashboard-grid">
-            <div class="card" style="text-align: center;">
-                <h3 style="color: var(--primary); margin-top: 0; font-family: Georgia, serif;">Student Access</h3>
-                <div style="background: #f8f9fa; padding: 15px; border: 1px dashed #ccc; margin-bottom: 15px;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ student_url }}/?cid={{ selected_class.id }}"
-                         class="qr-thumbnail" onclick="document.getElementById('qrModal').style.display='flex'">
+        <main class="main-content iris-page">
+            <div class="topbar">
+                <div>
+                    <h1 class="page-title">Live Attendance</h1>
+                    <p class="page-subtitle">Track student attendance in real-time</p>
                 </div>
-                <p style="color: #666; font-size: 13px;">Click QR code to project on screen</p>
             </div>
 
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
-                    <h3 style="margin:0; color: var(--primary); font-family: Georgia, serif;">Attendance Sheet</h3>
-                    <a href="/download-csv/{{ selected_class.id }}" style="background: var(--success); color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px; font-size: 14px; font-weight: 500;">Download Report</a>
-                </div>
-                <table>
-                    <thead>
-                        <tr><th style="width:50px">Toggle</th><th>Roll</th><th>Name</th><th>Status</th><th>Method</th><th>Alerts</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for row in attendance %}
-                        <tr style="{% if row.alert %}background:#fff8e1{% endif %}">
-                            <td>
-                                <label class="switch">
-                                    <input type="checkbox" id="toggle-{{ row.roll }}" onclick="toggleAttendance('{{ row.roll }}', '{{ selected_class.id }}', this)" {% if row.status != 'Absent' %}checked{% endif %}>
-                                    <span class="slider"></span>
-                                </label>
-                            </td>
-                            <td><strong>{{ row.roll }}</strong></td>
-                            <td>{{ row.name }}</td>
-                            <td id="status-{{ row.roll }}" style="color:{% if row.status != 'Absent' %}green{% else %}red{% endif %}; font-weight:bold;">{{ row.status }}</td>
-                            <td id="method-{{ row.roll }}" style="color:#555; font-size: 14px;">{{ row.method }}</td>
-                            <td id="alert-{{ row.roll }}" style="color:#e65100; font-weight:bold; font-size:13px;">{{ row.alert }}</td>
-                        </tr>
+                <label class="form-label">Select Academic Session</label>
+                <form method="GET" action="/dashboard">
+                    <select name="class_id" onchange="this.form.submit()" class="input">
+                        <option value="" disabled selected>-- Choose a class --</option>
+                        {% for c in classes %}
+                        <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>
+                            {{ c.name }} ({{ c.batch }})
+                        </option>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </select>
+                </form>
+            </div>
+
+            {% if selected_class %}
+            <input type="hidden" id="current_class_id" value="{{ selected_class.id }}">
+
+            <div class="dashboard-grid">
+                <div class="card student-access">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Student Access</div>
+                            <div class="card-subtitle">Share QR with students</div>
+                        </div>
+                    </div>
+                    <div class="qr-box">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ student_url }}/?cid={{ selected_class.id }}"
+                             class="qr-thumbnail" onclick="openModal('qrModal')" alt="Student QR Code">
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-secondary);">Click to project on screen</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Attendance Sheet</div>
+                            <div class="card-subtitle">Live updates • Toggle as needed</div>
+                        </div>
+                        <a href="/download-csv/{{ selected_class.id }}" class="btn btn-sm btn-secondary">⬇ Export CSV</a>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Present</th>
+                                    <th>Roll</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Method</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in attendance %}
+                                <tr{% if row.alert %} style="background: var(--yellow-bg);"{% endif %}>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="toggle-{{ row.roll }}" onclick="toggleAttendance('{{ row.roll }}', '{{ selected_class.id }}', this)" 
+                                                   {% if row.status != 'Absent' %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><strong>{{ row.roll }}</strong></td>
+                                    <td>{{ row.name }}</td>
+                                    <td id="status-{{ row.roll }}">
+                                        <span class="pill {% if row.status != 'Absent' %}pill-green{% else %}pill-red{% endif %}">
+                                            {{ row.status }}
+                                        </span>
+                                    </td>
+                                    <td id="method-{{ row.roll }}" style="font-size: 12px; color: var(--text-secondary);">{{ row.method }}</td>
+                                    <td id="alert-{{ row.roll }}" style="font-size: 12px; color: var(--orange);">{{ row.alert }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <div class="modal-backdrop" id="qrModal" style="display: none;">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">Student Check-In QR</div>
+                <button class="modal-close" onclick="closeModal('qrModal')"></button>
+            </div>
+            <div style="text-align: center; padding: 20px 0;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=420x420&data={{ student_url }}/?cid={{ selected_class.id }}" 
+                     style="border-radius: var(--r-lg); max-width: 100%;" alt="QR Code">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('qrModal')">Close</button>
             </div>
         </div>
-        {% endif %}
     </div>
 
-    <div id="qrModal" class="modal" onclick="this.style.display='none'">
-        <div style="background:white; padding:40px; border-radius:10px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
-            <h2 style="color:var(--primary); font-family: Georgia, serif;">Scan for Attendance</h2>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ student_url }}/?cid={{ selected_class.id }}" style="border:4px solid var(--primary); padding:10px; border-radius: 4px;">
-            <br><br><button onclick="document.getElementById('qrModal').style.display='none'" style="padding:10px 30px; cursor:pointer; background: #666; color: white; border: none; border-radius: 4px;">Close Projection</button>
-        </div>
-    </div>
-
+    <div class="toast-shelf"></div>
+    <script src="{{ url_for('static', path='js/iris-design-system.js') }}"></script>
     <script>
         async function toggleAttendance(roll, classId, checkbox) {
-            let fd = new FormData(); fd.append("class_id", classId); fd.append("roll", roll);
+            let fd = new FormData(); 
+            fd.append("class_id", classId); 
+            fd.append("roll", roll);
             try {
-                let res = await fetch("/toggle-attendance", {method:"POST", body:fd});
+                let res = await fetch("/toggle-attendance", {method: "POST", body: fd});
                 let data = await res.json();
-                document.getElementById("status-"+roll).innerText = data.status;
-                document.getElementById("status-"+roll).style.color = (data.status=="Absent")?"red":"green";
-            } catch(e) { checkbox.checked = !checkbox.checked; }
+                let statusEl = document.getElementById("status-" + roll);
+                if (statusEl) {
+                    let pillClass = data.status === "Absent" ? "pill-red" : "pill-green";
+                    let otherClass = data.status === "Absent" ? "pill-green" : "pill-red";
+                    statusEl.querySelector('.pill').className = 'pill ' + pillClass;
+                    statusEl.querySelector('.pill').innerText = data.status;
+                }
+            } catch(e) { 
+                checkbox.checked = !checkbox.checked;
+                showToast("Error updating attendance", "error");
+            }
         }
 
         const cid = document.getElementById("current_class_id");
-        if(cid) {
+        if (cid) {
             setInterval(async () => {
                 try {
                     let res = await fetch(`/api/live-attendance/${cid.value}`);
                     let data = await res.json();
                     data.forEach(s => {
                         let st = document.getElementById(`status-${s.roll}`);
-                        if(st) {
-                            st.innerText = s.status; st.style.color = s.color;
+                        if (st) {
+                            let pillClass = s.status === "Absent" ? "pill-red" : "pill-green";
+                            st.querySelector('.pill').className = 'pill ' + pillClass;
+                            st.querySelector('.pill').innerText = s.status;
                             document.getElementById(`method-${s.roll}`).innerText = s.method;
                             document.getElementById(`alert-${s.roll}`).innerText = s.alert;
                             document.getElementById(`toggle-${s.roll}`).checked = s.is_present;

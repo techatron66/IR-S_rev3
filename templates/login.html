@@ -2,88 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sign In</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS • Sign In</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/iris-design-system.css') }}">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f5f7;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #1d1d1f;
+            min-height: 100vh;
+            padding: 20px;
         }
+        
+        .login-container {
+            width: 100%;
+            max-width: 380px;
+        }
+        
         .login-card {
-            background: white;
-            padding: 50px;
-            width: 320px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 48px 40px;
+        }
+        
+        .login-card h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 32px;
             text-align: center;
         }
-        h2 { margin-top: 0; font-weight: 600; margin-bottom: 30px; }
-
-        input {
-            width: 100%;
-            padding: 16px;
-            margin-bottom: 15px;
-            border: 1px solid #d2d2d7;
-            border-radius: 12px;
-            font-size: 17px;
-            box-sizing: border-box;
-            background: #fafafa;
+        
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
         }
-        input:focus { outline: none; border-color: #0071e3; background: white; }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            background-color: #0071e3;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
+        
+        .form-group { 
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 13px;
             font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
         }
-        button:hover { background-color: #0077ed; }
-
-        .links { margin-top: 25px; font-size: 14px; }
-        a { color: #0071e3; text-decoration: none; }
-
-        .notification {
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 20px;
+        
+        .input {
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+            border-radius: 10px !important;
         }
-        .success { background: #eaffea; color: #34c759; }
-        .error { background: #ffebeb; color: #ff3b30; }
+        
+        .btn-submit { 
+            width: 100%;
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
+            margin-top: 8px;
+        }
+        
+        .login-links {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .login-links p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+        
+        .login-links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-links a:hover { 
+            text-decoration: underline; 
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <h2>Sign In</h2>
+    <div class="login-container">
+        <div class="card login-card">
+            <h1>IRIS Sign In</h1>
 
-        {% if success_msg %}
-            <div class="notification success">{{ success_msg }}</div>
-        {% endif %}
-        {% if error %}
-            <div class="notification error">{{ error }}</div>
-        {% endif %}
+            {% if success_msg %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        showToast("{{ success_msg }}", "success");
+                    });
+                </script>
+            {% endif %}
+            {% if error %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        showToast("{{ error }}", "error");
+                    });
+                </script>
+            {% endif %}
 
-        <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button>Continue</button>
-        </form>
+            <form action="/login" method="post">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="input" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-submit">Sign In</button>
+            </form>
 
-        <div class="links">
-            <p>Don't have an account? <a href="/register">Create one now</a></p>
+            <div class="login-links">
+                <p>Don't have an account? <a href="/register">Create one</a></p>
+            </div>
         </div>
     </div>
+
+    <div class="toast-shelf"></div>
+    <script src="{{ url_for('static', path='js/iris-design-system.js') }}"></script>
 </body>
 </html>

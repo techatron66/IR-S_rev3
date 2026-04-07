@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disputes — IRIS Student Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/student_portal.css">
+    <style>
+        .disputes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .dispute-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; transition: box-shadow 0.2s; }
+        .dispute-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07); }
+        .dispute-card-header { padding: 18px 22px; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+        .dispute-title { font-weight: 600; color: var(--text-primary); font-size: 15px; }
+        .dispute-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .dispute-body { padding: 0 22px 18px; }
+        .dispute-reason { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+        .professor-response { background: var(--surface); border-radius: 10px; padding: 14px; border-left: 3px solid var(--primary); }
+        .prof-resp-label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .prof-resp-text { font-size: 14px; color: var(--text-primary); }
+
+        /* Status badges */
+        .status-chip { display: inline-block; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #FEF9C3; color: #A16207; }
+        .status-reviewing { background: #EFF6FF; color: #1D4ED8; }
+        .status-accepted { background: #DCFCE7; color: #15803D; }
+        .status-rejected { background: #FEE2E2; color: #DC2626; }
+
+        .type-chip { background: var(--surface); color: var(--text-secondary); border-radius: 100px; padding: 3px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: white; border-radius: 20px; padding: 32px; width: 100%; max-width: 520px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); animation: popIn 0.25s ease; }
+        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .modal-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+        .type-selector { display: flex; gap: 12px; margin-bottom: 20px; }
+        .type-btn { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .type-btn.selected, .type-btn:hover { border-color: var(--primary); background: #EEF2FF; color: var(--primary); }
+        .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+        .file-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .empty-disputes { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-disputes div { font-size: 48px; margin-bottom: 16px; }
+    </style>
+</head>
+<body class="portal-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><span class="sb-logo">IR<em>IS</em></span><span class="sb-version">v2</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></a>
+            <a href="/attendance" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Attendance</span></a>
+            <a href="/marks" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">My Marks</span></a>
+            <a href="/disputes" class="nav-item active"><span class="nav-icon">⚠️</span><span class="nav-label">Disputes</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <div class="user-avatar">{{ user.name[0] }}</div>
+                <div class="user-info"><div class="user-name">{{ user.name }}</div><div class="user-roll">{{ user.roll_no }}</div></div>
+            </div>
+            <a href="/logout" class="logout-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <main class="portal-main">
+        <header class="portal-topbar">
+            <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <div class="topbar-title">My Disputes</div>
+            <div class="topbar-right">
+                <button class="notif-btn">🔔 <span class="notif-badge" id="notif-badge" {% if unread_notifs == 0 %}style="display:none"{% endif %}>{{ unread_notifs }}</span></button>
+            </div>
+        </header>
+
+        <div class="portal-content">
+            <div class="disputes-header">
+                <div>
+                    <h1 class="page-title-inline">Disputes</h1>
+                    <p class="page-sub" style="margin:0">Contest attendance records or exam marks</p>
+                </div>
+                <button class="btn-primary-portal" onclick="openModal()">＋ Raise Dispute</button>
+            </div>
+
+            {% if not disputes %}
+            <div class="empty-disputes">
+                <div>⚖️</div>
+                <h3 style="color:var(--text-primary)">No disputes yet</h3>
+                <p>If you believe there's an error in your attendance or marks, raise a dispute here.</p>
+                <button class="btn-primary-portal" onclick="openModal()">Raise Your First Dispute</button>
+            </div>
+            {% else %}
+            {% for d in disputes %}
+            <div class="dispute-card">
+                <div class="dispute-card-header" onclick="toggleDispute({{ loop.index }})">
+                    <div>
+                        <div class="dispute-title">
+                            <span class="type-chip">{{ d.type | upper }}</span>
+                            &nbsp; Dispute #{{ d.id }} — Ref: {{ d.ref_id }}
+                        </div>
+                        <div class="dispute-meta">{{ d.created_at.strftime('%Y-%m-%d %H:%M') if d.created_at else '' }}</div>
+                    </div>
+                    <span class="status-chip status-{{ d.status }}">{{ d.status }}</span>
+                </div>
+                <div id="dispute-body-{{ loop.index }}" class="dispute-body" style="display:none">
+                    <div class="dispute-reason">{{ d.reason }}</div>
+                    {% if d.professor_response %}
+                    <div class="professor-response">
+                        <div class="prof-resp-label">👨‍🏫 Professor's Response</div>
+                        <div class="prof-resp-text">{{ d.professor_response }}</div>
+                        {% if d.resolved_at %}
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Resolved: {{ d.resolved_at.strftime('%Y-%m-%d') }}</div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div style="font-size:13px;color:var(--text-muted);font-style:italic">Awaiting professor review...</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- New Dispute Modal -->
+    <div class="modal-overlay" id="dispute-modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-box">
+            <h2 class="modal-title">Raise a Dispute</h2>
+            <p class="modal-sub">Provide details and your professor will review within 48 hours.</p>
+
+            <form action="/disputes/new" method="POST" enctype="multipart/form-data" id="dispute-form">
+                <div class="form-group">
+                    <label class="form-label">Dispute Type</label>
+                    <div class="type-selector">
+                        <button type="button" class="type-btn selected" id="type-attendance" onclick="selectType('attendance')">
+                            📅 Attendance
+                        </button>
+                        <button type="button" class="type-btn" id="type-marks" onclick="selectType('marks')">
+                            📊 Exam Marks
+                        </button>
+                    </div>
+                    <input type="hidden" name="dispute_type" id="dispute_type_input" value="attendance">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Reference ID</label>
+                    <input type="number" name="ref_id" class="form-input" required placeholder="Session ID or Answer Record ID" min="1">
+                    <div class="file-hint">Find the ID from your attendance or marks page</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Reason</label>
+                    <textarea name="reason" class="form-input" rows="4" required maxlength="1000"
+                        placeholder="Describe your dispute clearly..."
+                        oninput="document.getElementById('char-count').textContent = this.value.length + '/1000'"></textarea>
+                    <div class="char-count" id="char-count">0/1000</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Supporting Evidence <span style="color:var(--text-muted)">(optional)</span></label>
+                    <input type="file" name="evidence" class="form-input" accept="image/*,.pdf">
+                    <div class="file-hint">Max 50MB · Images or PDF only</div>
+                </div>
+
+                <div class="form-actions mt-2">
+                    <button type="button" class="btn-ghost-portal" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary-portal">Submit Dispute</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() { document.getElementById('dispute-modal').classList.add('open'); }
+        function closeModal() { document.getElementById('dispute-modal').classList.remove('open'); }
+
+        function selectType(type) {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('type-' + type).classList.add('selected');
+            document.getElementById('dispute_type_input').value = type;
+        }
+
+        function toggleDispute(idx) {
+            const body = document.getElementById('dispute-body-' + idx);
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+
+        setInterval(async () => {
+            const res = await fetch('/notifications');
+            const data = await res.json();
+            const badge = document.getElementById('notif-badge');
+            badge.textContent = data.unread_count;
+            badge.style.display = data.unread_count > 0 ? 'flex' : 'none';
+        }, 30000);
+    </script>
+</body>
+</html>

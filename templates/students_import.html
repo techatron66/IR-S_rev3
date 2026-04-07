@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Students — IRIS v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/grading.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🏛️</span>
+            <span class="brand-text">IR<em>IS</em></span>
+            <span class="brand-badge">v2</span>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">📊 Attendance</a>
+            <a href="/manage">🏫 Classes</a>
+            <a href="/dashboard/exams">📋 Exams</a>
+            <a href="/dashboard/disputes">⚠️ Disputes</a>
+            <a href="/dashboard/students" class="active">👥 Students</a>
+            <a href="/logout" class="nav-danger">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <a href="/dashboard/students" class="back-link">← Back to Students</a>
+                <h1 class="page-title">Import Students (CSV)</h1>
+                <p class="page-subtitle">Create student portal accounts from a CSV file</p>
+            </div>
+        </div>
+
+        <div class="form-card" style="max-width:640px">
+            {% if result %}
+            <div class="success-banner" style="margin-bottom:24px">
+                ✓ Import complete: {{ result.created }} created, {{ result.skipped }} skipped
+                {% if result.errors %}, {{ result.errors | length }} errors{% endif %}
+            </div>
+            {% if result.errors %}
+            <div class="error-log-box" style="margin-bottom:24px">
+                <h4>Errors</h4>
+                <pre>{{ result.errors | join('\n') }}</pre>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <h2 class="form-section-title">CSV Format</h2>
+            <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:24px">
+                <pre class="mono" style="font-size:12px;color:var(--text-secondary);margin:0">roll_no,name,email,class_ids,password
+CS2024001,John Smith,john@example.com,"1,2",iris2025
+CS2024002,Jane Doe,jane@example.com,1,iris2025</pre>
+            </div>
+            <ul style="font-size:13px;color:var(--text-muted);margin-bottom:28px;padding-left:20px">
+                <li><strong>roll_no</strong> — unique roll number (must match face-recognition student)</li>
+                <li><strong>class_ids</strong> — comma-separated classroom IDs (from IRIS DB)</li>
+                <li><strong>password</strong> — default password (optional, defaults to <code class="mono">iris2025</code>)</li>
+                <li>Existing accounts are skipped (no overwrite)</li>
+            </ul>
+
+            <form action="/dashboard/students/import" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label">CSV File</label>
+                    <input type="file" name="file" accept=".csv" class="form-input" required>
+                </div>
+                <div class="form-actions mt-2">
+                    <a href="/dashboard/students" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary">⬆ Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
